@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>오늘의 한마디</title>
+<style>
+:root{font-family:system-ui,'Malgun Gothic',sans-serif;color-scheme:dark}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:linear-gradient(135deg,#10182d,#29385c);color:#fff;display:grid;place-items:center;padding:20px}.wrap{width:min(100%,520px)}header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}h1{font-size:24px;margin:0}.date{color:#bdc9df;font-size:14px}.card{background:#25334f;border:1px solid #435476;border-radius:24px;padding:38px 24px;text-align:center;box-shadow:0 16px 40px #0003}.emoji{font-size:44px}.tag{color:#f5cf82;font-size:14px}blockquote{font-size:clamp(23px,5vw,31px);line-height:1.5;font-weight:700;margin:24px 0}p{color:#bac9e1}.actions{display:flex;gap:10px;margin-top:18px}button{flex:1;padding:14px;border:0;border-radius:13px;background:#435577;color:#fff;font-size:15px;cursor:pointer}button:hover{background:#566c93}section{margin-top:30px}h2{font-size:18px}.saved{list-style:none;padding:0}.saved li{padding:12px 14px;background:#263653;border-radius:10px;margin:8px 0;line-height:1.5}.hint{font-size:12px;text-align:center;margin-top:28px}#notice{min-height:20px;text-align:center;color:#f6d992;font-size:13px}
+</style>
+</head>
+<body><main class="wrap"><header><h1>☀️ 오늘의 한마디</h1><span class="date" id="date"></span></header><div class="card"><div class="emoji" id="emoji">✨</div><div class="tag" id="category"></div><blockquote id="quote"></blockquote><p>하루에 하나씩, 마음에 남는 말</p></div><div class="actions"><button id="save">♡ 저장하기</button><button id="copy">📋 복사하기</button></div><div id="notice" role="status"></div><section><h2>💗 저장한 한마디</h2><ul class="saved" id="saved"></ul></section><p class="hint">한마디는 날짜에 따라 매일 바뀌어요. 저장한 글은 이 브라우저에 보관돼요.</p></main>
+<script>
+const messages=[
+{type:'위로',emoji:'❤️',text:'오늘 조금 느렸어도 괜찮아. 너만의 속도가 있으니까.'},
+{type:'동기부여',emoji:'🔥',text:'작은 시작이 큰 변화를 만든다.'},
+{type:'재미',emoji:'😂',text:'월요일이 싫다면 달력을 넘겨 봐. 그래도 월요일이야.'},
+{type:'위로',emoji:'🌷',text:'완벽한 하루가 아니어도 소중한 하루야.'},
+{type:'동기부여',emoji:'🚀',text:'어제보다 한 걸음이면 충분히 앞으로 간 거야.'},
+{type:'재미',emoji:'😆',text:'계획은 완벽했는데 이불이 너무 설득력 있었어.'},
+{type:'위로',emoji:'🌙',text:'잠깐 쉬는 것도 앞으로 나아가는 방법이야.'},
+{type:'동기부여',emoji:'⭐',text:'할 수 있는 작은 일부터 시작해 보자.'},
+{type:'재미',emoji:'🍕',text:'행복은 멀리 있지 않아. 가끔은 피자 상자 안에 있어.'},
+{type:'위로',emoji:'☁️',text:'흐린 날도 하늘은 그대로 거기에 있어.'},
+{type:'동기부여',emoji:'🌱',text:'오늘 심은 작은 씨앗이 언젠가 자랄 거야.'},
+{type:'재미',emoji:'🐢',text:'거북이도 결국 도착했어. 물론 지각은 했을지도.'},
+{type:'위로',emoji:'🫶',text:'잘하지 못한 일보다 해낸 일을 하나 떠올려 봐.'},
+{type:'동기부여',emoji:'💪',text:'시작하기에 딱 좋은 날은 바로 오늘이야.'},
+{type:'재미',emoji:'😎',text:'오늘의 목표: 어제의 나보다 물 한 잔 더 마시기.'}
+];
+const el=id=>document.getElementById(id);
+function todayKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function dayNumber(d){return Math.floor(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())/86400000)}
+function getSaved(){try{const v=JSON.parse(localStorage.getItem('daily-quotes-saved')||'[]');return Array.isArray(v)?v:[]}catch{return []}}
+function setSaved(v){try{localStorage.setItem('daily-quotes-saved',JSON.stringify(v));return true}catch{el('notice').textContent='이 브라우저에서는 저장할 수 없어요.';return false}}
+let activeKey='';let current;
+function renderToday(){const now=new Date(),key=todayKey(now);if(key===activeKey)return;activeKey=key;current=messages[((dayNumber(now)%messages.length)+messages.length)%messages.length];el('date').textContent=now.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'});el('emoji').textContent=current.emoji;el('category').textContent=current.type;el('quote').textContent='“'+current.text+'”';updateSaveButton()}
+function updateSaveButton(){el('save').textContent=getSaved().includes(current.text)?'♥ 저장됨':'♡ 저장하기'}
+function renderSaved(){const ul=el('saved');ul.replaceChildren();const arr=getSaved();if(!arr.length){const li=document.createElement('li');li.textContent='아직 저장한 한마디가 없어요.';ul.append(li);return}arr.forEach(t=>{const li=document.createElement('li');li.textContent=t;ul.append(li)})}
+el('save').addEventListener('click',()=>{renderToday();const arr=getSaved(),i=arr.indexOf(current.text);if(i>=0)arr.splice(i,1);else arr.unshift(current.text);if(setSaved(arr)){updateSaveButton();renderSaved();el('notice').textContent=i>=0?'저장을 취소했어요.':'한마디를 저장했어요.'}});
+el('copy').addEventListener('click',async()=>{renderToday();try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(current.text)}else{const ta=document.createElement('textarea');ta.value=current.text;ta.style.position='fixed';ta.style.opacity='0';document.body.append(ta);ta.select();if(!document.execCommand('copy'))throw Error('copy');ta.remove()}el('notice').textContent='한마디를 복사했어요!'}catch{el('notice').textContent='복사할 수 없어요. 글을 직접 선택해 복사해 주세요.'}});
+renderToday();renderSaved();setInterval(renderToday,30000);document.addEventListener('visibilitychange',renderToday);
+</script></body></html>
